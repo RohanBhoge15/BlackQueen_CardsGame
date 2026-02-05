@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cards Game">
+
+    <title>Trump Card Game</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loader">
+                <div class="card-loader">
+                    <div class="card-flip">&#9824;</div>
+                    <div class="card-flip">&#9829;</div>
+                    <div class="card-flip">&#9830;</div>
+                    <div class="card-flip">&#9827;</div>
+                </div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen">
+            <div class="home-container">
+                <h1 class="game-title">
+                    <span class="suit red">&#9829;</span>
+                    Trump Card
+                    <span class="suit">&#9824;</span>
+                </h1>
+                <p class="tagline">Bid, Partner & Win!</p>
+
+                <div class="input-group">
+                    <label for="player-name">Your Name</label>
+                    <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+                </div>
+
+                <div class="button-group">
+                    <button id="btn-create" class="btn btn-primary">Create Room</button>
+                    <button id="btn-join" class="btn btn-secondary">Join Room</button>
+                </div>
+
+                <div id="server-info" class="server-info">
+                    <p>Share this with friends on same WiFi:</p>
+                    <code id="server-url">Loading...</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="create-screen" class="screen">
+            <div class="screen-container">
+                <button class="btn-back" onclick="showScreen('home-screen')">&#8592; Back</button>
+                <h2>Create Room</h2>
+
+                <div class="input-group">
+                    <label for="num-players">Number of Players</label>
+                    <div class="slider-container">
+                        <input type="range" id="num-players" min="2" max="10" value="4">
+                        <span id="num-players-value">4</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="num-decks">Number of Decks</label>
+                    <div class="slider-container">
+                        <input type="range" id="num-decks" min="1" max="3" value="1">
+                        <span id="num-decks-value">1</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="num-partners">Number of Partners</label>
+                    <div class="slider-container">
+                        <input type="range" id="num-partners" min="0" max="2" value="2">
+                        <span id="num-partners-value">2</span>
+                    </div>
+                    <p class="setting-hint" id="partners-hint">Bidder + 2 partners vs others</p>
+                </div>
+
+                <button id="btn-create-room" class="btn btn-primary btn-large">Create Game</button>
+            </div>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div id="join-screen" class="screen">
+            <div class="screen-container">
+                <button class="btn-back" onclick="showScreen('home-screen')">&#8592; Back</button>
+                <h2>Join Room</h2>
+
+                <div class="input-group">
+                    <label for="room-code">Room Code</label>
+                    <input type="text" id="room-code" placeholder="Enter 6-digit code" maxlength="6" style="text-transform: uppercase;">
+                </div>
+
+                <button id="btn-join-room" class="btn btn-primary btn-large">Join Game</button>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="screen-container">
+                <div class="room-code-display">
+                    <p>Room Code</p>
+                    <h2 id="display-room-code">------</h2>
+                    <button class="btn-copy" onclick="copyRoomCode()">Copy</button>
+                </div>
+
+                <!-- Game Settings Display -->
+                <div class="lobby-settings" id="lobby-settings">
+                    <div class="setting-item">
+                        <span class="setting-label">Decks:</span>
+                        <span class="setting-value" id="lobby-num-decks">1</span>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Partners:</span>
+                        <span class="setting-value" id="lobby-num-partners">2</span>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Mode:</span>
+                        <span class="setting-value" id="lobby-game-mode">Bidder + 2</span>
+                    </div>
+                </div>
+
+                <div class="players-list" id="lobby-players">
+                    <!-- Players will be added here -->
+                </div>
+
+                <div id="host-controls" class="host-controls hidden">
+                    <button id="btn-start-game" class="btn btn-primary btn-large">Start Game</button>
+                </div>
+
+                <p id="waiting-msg" class="waiting-message">Waiting for host to start...</p>
+            </div>
+        </div>
+
+        <!-- Card Viewing Screen -->
+        <div id="viewing-screen" class="screen">
+            <div class="screen-container">
+                <div class="viewing-header">
+                    <h2>View Your Cards</h2>
+                    <div class="countdown-timer">
+                        <span>Bidding starts in</span>
+                        <div class="timer-display" id="viewing-timer">1:30</div>
+                    </div>
+                </div>
+
+                <p class="viewing-hint">Study your cards carefully before bidding begins!</p>
+
+                <div class="viewing-cards" id="viewing-cards">
+                    <!-- Player's cards will be shown here -->
+                </div>
+
+                <div class="viewing-stats">
+                    <div class="stat">
+                        <span>Total Cards</span>
+                        <strong id="viewing-card-count">0</strong>
+                    </div>
+                    <div class="stat">
+                        <span>Point Cards</span>
+                        <strong id="viewing-point-cards">0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bidding Screen -->
+        <div id="bidding-screen" class="screen">
+            <div class="screen-container">
+                <h2>Bidding Phase</h2>
+
+                <div class="bid-info">
+                    <div class="current-bid">
+                        <span>Current Bid</span>
+                        <strong id="current-bid-amount">100</strong>
+                    </div>
+                    <div class="max-bid">
+                        <span>Max Bid</span>
+                        <strong id="max-bid-display">150</strong>
+                    </div>
+                    <div class="highest-bidder">
+                        <span>Highest Bidder</span>
+                        <strong id="highest-bidder-name">-</strong>
+                    </div>
+                </div>
+
+                <div class="bidding-turn">
+                    <p id="bidding-turn-text">Waiting...</p>
+                </div>
+
+                <div id="bid-controls" class="bid-controls hidden">
+                    <div class="bid-input-group">
+                        <button class="btn-bid-adjust" onclick="adjustBid(-10)">-10</button>
+                        <input type="number" id="bid-amount" min="60" step="10" value="60">
+                        <button class="btn-bid-adjust" onclick="adjustBid(10)">+10</button>
+                    </div>
+                    <div class="bid-buttons">
+                        <button id="btn-place-bid" class="btn btn-primary">Bid</button>
+                        <button id="btn-pass" class="btn btn-secondary">Pass</button>
+                    </div>
+                </div>
+
+                <div class="my-cards-preview" id="bidding-cards-preview">
+                    <!-- Cards preview -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Partner Selection Screen -->
+        <div id="partner-screen" class="screen">
+            <div class="screen-container">
+                <h2>You Won the Bid!</h2>
+                <p class="subtitle">Select Trump Suit & Partner Cards</p>
+
+                <div class="trump-selection">
+                    <label>Choose Trump Suit (Leader)</label>
+                    <div class="suit-options">
+                        <button class="suit-btn" data-suit="hearts">
+                            <span class="red">&#9829;</span> Hearts
+                        </button>
+                        <button class="suit-btn" data-suit="diamonds">
+                            <span class="red">&#9830;</span> Diamonds
+                        </button>
+                        <button class="suit-btn" data-suit="clubs">
+                            <span>&#9827;</span> Clubs
+                        </button>
+                        <button class="suit-btn" data-suit="spades">
+                            <span>&#9824;</span> Spades
+                        </button>
+                    </div>
+                </div>
+
+                <div class="partner-selection" id="partner-selection-container">
+                    <label id="partner-selection-label">Choose 2 Partner Cards</label>
+                    <p class="hint" id="partner-selection-hint">Players holding these cards are your secret partners</p>
+
+                    <div class="partner-cards-selected" id="partner-cards-selected">
+                        <div class="partner-card-slot" id="partner-slot-1">Select Card 1</div>
+                        <div class="partner-card-slot" id="partner-slot-2">Select Card 2</div>
+                    </div>
+
+                    <div class="card-selector">
+                        <div class="rank-selector">
+                            <label>Rank</label>
+                            <select id="partner-rank">
+                                <option value="A">Ace</option>
+                                <option value="K">King</option>
+                                <option value="Q">Queen</option>
+                                <option value="J">Jack</option>
+                                <option value="10">10</option>
+                                <option value="9">9</option>
+                                <option value="8">8</option>
+                                <option value="7">7</option>
+                                <option value="6">6</option>
+                                <option value="5">5</option>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="suit-selector">
+                            <label>Suit</label>
+                            <select id="partner-suit">
+                                <option value="hearts">&#9829; Hearts</option>
+                                <option value="diamonds">&#9830; Diamonds</option>
+                                <option value="clubs">&#9827; Clubs</option>
+                                <option value="spades">&#9824; Spades</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-small" onclick="addPartnerCard()">Add</button>
+                    </div>
+                </div>
+
+                <button id="btn-confirm-partners" class="btn btn-primary btn-large" disabled>Confirm Selection</button>
+            </div>
+        </div>
+
+        <!-- Waiting for Partner Selection -->
+        <div id="waiting-partner-screen" class="screen">
+            <div class="screen-container center">
+                <div class="waiting-animation">
+                    <div class="spinner"></div>
+                </div>
+                <h2 id="bidder-won-name">Player</h2>
+                <p>won the bid with <strong id="won-bid-amount">0</strong> points</p>
+                <p class="subtitle">Waiting for trump & partner selection...</p>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-container">
+                <!-- Score Display -->
+                <div class="score-display">
+                    <div class="team-score bidder-team">
+                        <span class="team-name" id="bidder-team-name">Bidder's Team</span>
+                        <span class="score" id="bidder-score">0</span>
+                        <span class="target">/ <span id="target-score">100</span></span>
+                    </div>
+                    <div class="team-score against-team">
+                        <span class="team-name">Against Team</span>
+                        <span class="score" id="against-score">0</span>
+                    </div>
+                </div>
+
+                <!-- Game Info -->
+                <div class="game-info">
+                    <div class="trump-display">
+                        <span>Trump:</span>
+                        <span id="trump-suit-display" class="trump-suit">-</span>
+                    </div>
+                    <div class="led-suit-display">
+                        <span>Led:</span>
+                        <span id="led-suit-display" class="led-suit">-</span>
+                    </div>
+                    <div class="trick-display">
+                        <span>Trick:</span>
+                        <span id="trick-number">1</span>
+                    </div>
+                    <div class="partner-cards-display">
+                        <span>Partners:</span>
+                        <span id="partner-cards-list">-</span>
+                    </div>
+                </div>
+
+                <!-- Other Players -->
+                <div class="other-players" id="other-players">
+                    <!-- Other players cards (face down) and status -->
+                </div>
+
+                <!-- Center Table (Current Trick) -->
+                <div class="table-center" id="table-center">
+                    <div class="trick-cards" id="trick-cards">
+                        <!-- Cards played in current trick -->
+                    </div>
+                    <p id="current-turn-text" class="turn-text">Waiting...</p>
+                </div>
+
+                <!-- Player's Hand -->
+                <div class="player-hand" id="player-hand">
+                    <!-- Player's cards -->
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Type message..." maxlength="100">
+                    <button id="btn-send-chat" class="btn-chat-send">Send</button>
+                </div>
+
+                <!-- RageBait Surrender Button -->
+                <button id="btn-ragebait" class="btn-ragebait" onclick="voteSurrender()" title="Vote to end game">
+                    RageBait <span id="ragebait-votes"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Popup Container -->
+        <div id="chat-popup-container"></div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <div class="screen-container center">
+                <div id="result-animation" class="result-animation">
+                    <!-- Win/Lose animation -->
+                </div>
+
+                <h1 id="result-title">Game Over</h1>
+                <p id="result-subtitle" class="subtitle"></p>
+
+                <div class="final-scores">
+                    <div class="final-score">
+                        <span>Bidder's Team</span>
+                        <strong id="final-bidder-score">0</strong>
+                    </div>
+                    <div class="final-score">
+                        <span>Target</span>
+                        <strong id="final-target">0</strong>
+                    </div>
+                    <div class="final-score">
+                        <span>Against Team</span>
+                        <strong id="final-against-score">0</strong>
+                    </div>
+                </div>
+
+                <div class="teams-reveal">
+                    <div class="team-reveal">
+                        <h3>Bidder's Team</h3>
+                        <ul id="bidder-team-list"></ul>
+                    </div>
+                    <div class="team-reveal">
+                        <h3>Against Team</h3>
+                        <ul id="against-team-list"></ul>
+                    </div>
+                </div>
+
+                <!-- Cheating Report -->
+                <div id="cheating-report" class="cheating-report">
+                    <!-- Cheating detection results will be displayed here -->
+                </div>
+
+                <!-- Play Again Button Container -->
+                <div id="play-again-container" class="play-again-container">
+                    <button onclick="playAgain()" class="btn btn-primary btn-large">Play Again</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="/static/js/game.js"></script>
+</body>
+</html>
