@@ -56,7 +56,7 @@ Want to play with friends who aren't on the same WiFi? Use Cloudflare Tunnel to 
 - **Players:** 2-10 players
 - **Decks:** 1-3 decks (configurable)
 - **Partners:** 0, 1, or 2 (configurable)
-- **Network:** Local WiFi/Hotspot only (same network)
+- **Network:** Local WiFi/Hotspot only (same network) or host using Cloudflare which requires internet connection for all players
 
 ### Game Modes
 
